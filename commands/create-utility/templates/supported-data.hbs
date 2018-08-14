@@ -1,0 +1,23 @@
+export default {
+  name: '{{ name }}',
+  expectedSupportArgumentTypes: ['number'],
+  typeToFunction: {
+    array: arrayFunction
+  }
+}
+
+function arrayFunction(aNumber) {
+  return anArray => {
+    // do something with your number and array here
+  }
+}
+{{#unless slim }}
+
+/*
+ *  for information on all available properties you can use above, see
+ *    olsonpm.github.io/fes
+ *
+ *  examples can be found at
+ *    github.com/olsonpm/fes/tree/dev/examples/supported-data
+*/
+{{/unless }}

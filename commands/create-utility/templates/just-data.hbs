@@ -1,0 +1,20 @@
+export default {
+  name: '{{ name }}',
+  typeToFunction: {
+    array: arrayFunction
+  }
+}
+
+function arrayFunction(anArray) {
+  // do something with your array here
+}
+{{#unless slim }}
+
+/*
+ *  for information on all available properties you can use above, see
+ *    olsonpm.github.io/fes
+ *
+ *  examples can be found at
+ *    github.com/olsonpm/fes/tree/dev/examples/just-data
+*/
+{{/unless }}
