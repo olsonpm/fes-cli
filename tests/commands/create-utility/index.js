@@ -50,6 +50,8 @@ suite('create-utility', () => {
     })
 
     suite('with optional arguments', () => {
+      setup(() => del(tmpFesSuccessDir).then(() => makeDir(tmpFesSuccessDir)))
+
       test('--kebab-filename', () =>
         testType('no-data', { '--kebab-filename': true }))
       test('--slim', () => testType('no-data', { '--slim': true }))
@@ -96,6 +98,14 @@ suite('create-utility', () => {
           message.kebabFilenameIsBoolean + usage + '\n\n'
         )
       })
+      test('--kebab-filename with invalid name', () => {
+        const command =
+          'create-utility --kebab-filename --name aBC --type no-data'
+        return runFesCommand(command).should.eventually.have.property(
+          'stderr',
+          message.nameIncompatibleWithKebabFilename + usage + '\n\n'
+        )
+      })
       test('--slim is a boolean', () => {
         const command = 'create-utility --slim invalid --name a --type no-data'
         return runFesCommand(command).should.eventually.have.property(
@@ -131,6 +141,7 @@ function getMessages() {
     expectedArgumentName: getExpectedArgumentNameMessage(),
     invalidCwd: getInvalidCwdMessage(),
     kebabFilenameIsBoolean: getKebabFilenameIsBooleanMessage(),
+    nameIncompatibleWithKebabFilename: getNameIncompatibleWithKebabFilenameMessage(),
     nameIsInvalid: getNameIsInvalidMessage(),
     missingArg: getMissingArgMessage(),
     slimIsBoolean: getSlimIsBooleanMessage(),
@@ -203,6 +214,15 @@ function getNameIsInvalidMessage() {
     --name '1' is invalid
 
     it must pass the regex: ${validNameRe}
+  `)
+}
+
+function getNameIncompatibleWithKebabFilenameMessage() {
+  return tedent(`
+    either rename your utility from 'aBC' to 'aBc' or
+      remove the --kebab-filename flag
+
+    this will allow me to deduce your utility name from the filename
   `)
 }
 

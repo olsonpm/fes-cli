@@ -18,9 +18,9 @@ const pathToFesCli = path.resolve(__dirname, '../')
 //------//
 
 const runFesCommand = (args, opts) =>
-  pExec(`node ${pathToFesCli} ${args}`, opts).catch(({ stderr }) => ({
-    stderr,
-  }))
+  pExec(`node ${pathToFesCli} ${args}`, opts).catch(result => {
+    return result.error ? Promise.reject(result.error) : result
+  })
 
 //
 //---------//

@@ -2,7 +2,8 @@
 // Imports //
 //---------//
 
-const pify = require('pify'),
+const decamelize = require('decamelize'),
+  pify = require('pify'),
   tedent = require('tedent')
 
 const { EOL } = require('os')
@@ -19,10 +20,35 @@ const pFs = pify(require('fs'))
 // Main //
 //------//
 
+const all_object = predicate => anObject => {
+  for (const key of Object.keys(anObject)) {
+    const value = anObject[key]
+    if (!predicate(value, key, anObject)) return false
+  }
+  return true
+}
+
 const alwaysReturn = something => () => something
+
+const appendAll = appendThisArray => toThisArray =>
+  toThisArray.concat(appendThisArray)
 
 const assignOver = objectToAssignOver => primaryObject =>
   Object.assign({}, objectToAssignOver, primaryObject)
+
+const contains = element => anArray => anArray.indexOf(element) !== -1
+
+const dashelize = aString => decamelize(aString, '-')
+
+const discard = elementToDiscard => fromArray => {
+  const result = []
+
+  for (const element of fromArray) {
+    if (elementToDiscard !== element) result.push(element)
+  }
+
+  return result
+}
 
 const discardAll = arrayOrSet => fullArray => {
   const setToDiscard = new Set(arrayOrSet),
@@ -37,6 +63,8 @@ const discardAll = arrayOrSet => fullArray => {
 
 const discardFirst = n => stringOrArray => stringOrArray.slice(n)
 
+const discardLast = n => stringOrArray => stringOrArray.slice(0, -n)
+
 const discardPreceding = maybeStartsWithThis => {
   const shouldDiscardFrom = startsWith(maybeStartsWithThis),
     discardPrecedingFrom = discardFirst(maybeStartsWithThis.length)
@@ -48,12 +76,23 @@ const discardPreceding = maybeStartsWithThis => {
   }
 }
 
-const discardWhen = predicate => fromArray => {
+const discardWhen_array = predicate => fromArray => {
   const result = []
 
   for (let i = 0; i < fromArray.length; i += 1) {
     const element = fromArray[i]
     if (!predicate(element, i, fromArray)) result.push(element)
+  }
+
+  return result
+}
+
+const discardWhen_object = predicate => anObject => {
+  const result = {}
+
+  for (const key of Object.keys(anObject)) {
+    const value = anObject[key]
+    if (!predicate(value, key, anObject)) result[key] = value
   }
 
   return result
@@ -65,21 +104,55 @@ const endsWith = mightEndWith => fullString =>
 const fromPairs = anArray =>
   anArray.reduce((res, [key, val]) => mSet(key, val)(res), {})
 
-const handleUnexpectedError = error => {
-  // eslint-disable-next-line no-console
-  console.error(
-    tedent(`
-      An unexpected error occurred while creating the preset
+const getAllButLastElement = discardLast(1)
 
-      ${error}
-    `)
-  )
-  return Promise.resolve(1)
+const getArrayOfKeys = Object.keys
+
+const getArrayOfValues = anObject =>
+  Object.keys(anObject).map(key => anObject[key])
+
+const getLastElement = anArray => anArray[anArray.length - 1]
+
+const getValueAt = key => anObject => anObject[key]
+
+const getValueAtPath = arrayOfKeys => {
+  const allButLastKey = getAllButLastElement(arrayOfKeys),
+    lastKey = getLastElement(arrayOfKeys)
+
+  return anObject => {
+    for (const key of allButLastKey) {
+      if (anObject[key] === null || typeof anObject[key] !== 'object') {
+        return
+      }
+
+      anObject = anObject[key]
+    }
+    return anObject[lastKey]
+  }
+}
+
+const isEmpty = something => {
+  if (something === undefined || something === null) return true
+  else return !isLaden(something)
 }
 
 const isFalsey = something => !something
 
+const isLaden = something => {
+  if (something === undefined || something === null) return false
+  else if (Array.isArray(something) || typeof something === 'string')
+    return !!something.length
+  else if (something instanceof Map || something instanceof Set)
+    return something.size
+  else if (typeof something === 'object') return Object.keys(something).length
+  else {
+    throw new Error('what on earth are you checking isLaden on?')
+  }
+}
+
 const isString = something => typeof something === 'string'
+
+const isTruthy = something => !!something
 
 const join = separator => aSetOrArray => {
   const anArray = aSetOrArray instanceof Set ? [...aSetOrArray] : aSetOrArray
@@ -110,19 +183,31 @@ const keepWhen_object = predicate => anObject => {
 
 const makeApproveHasNoArguments = command => {
   return function approveHasNoArguments(commandArgs) {
-    if (!commandArgs.length) return
+    return !commandArgs.length
+      ? { argumentsObject: {} }
+      : {
+          errorMessage:
+            tedent(`
+              The command '${command}' has no arguments
 
-    return (
-      tedent(`
-        The command '${command}' has no arguments
-
-        arguments provided: ${truncateToNChars(30)(commandArgs)}
-      `) + '\n'
-    )
+              arguments provided: ${truncateToNChars(30)(commandArgs)}
+            `) + '\n',
+        }
   }
 }
 
-const map = mapperFn => anArray => anArray.map(mapperFn)
+const map_array = mapperFn => anArray => anArray.map(mapperFn)
+
+const map_object = mapperFn => anObject => {
+  const result = {}
+
+  for (const key of Object.keys(anObject)) {
+    const value = anObject[key]
+    result[key] = mapperFn(value, key, anObject)
+  }
+
+  return result
+}
 
 const mapKeys = mapperFunction => anObject =>
   reduce_object((result, value, key) => {
@@ -131,11 +216,10 @@ const mapKeys = mapperFunction => anObject =>
     return result
   }, {})(anObject)
 
-const map_object = mapperFunction => anObject =>
-  reduce_object(
-    (result, value, key) => mSet(key, mapperFunction(value))(result),
-    {}
-  )(anObject)
+const mAppendAll = appendThisArray => toThisArray => {
+  Array.prototype.push.apply(toThisArray, appendThisArray)
+  return toThisArray
+}
 
 const mMap = mapperFn => anArray => {
   for (let i = 0; i < anArray.length; i += 1) {
@@ -153,11 +237,27 @@ const mSet = (key, value) => anObject => {
 const passThrough = (arg, arrayOfFunctions) =>
   arrayOfFunctions.reduce((result, aFunction) => aFunction(result), arg)
 
+const pickAll = arrayOfKeys => anObject => {
+  const setOfKeys = new Set(arrayOfKeys),
+    result = {}
+
+  for (const key of Object.keys(anObject)) {
+    const value = anObject[key]
+    if (setOfKeys.has(key)) result[key] = value
+  }
+
+  return result
+}
+
+const prepend = prependThis => toThis => prependThis + toThis
+
 const readFile = filepath => pFs.readFile(filepath, 'utf8')
 
+const reduce_array = (reducerFunction, initialValue) => anArray =>
+  anArray.reduce(reducerFunction, initialValue)
+
 const reduce_object = (reducerFunction, start) => anObject => {
-  return Array.prototype.reduce.call(
-    Object.keys(anObject),
+  return Object.keys(anObject).reduce(
     (result, key) => reducerFunction(result, anObject[key], key, anObject),
     start
   )
@@ -335,30 +435,48 @@ function isControlCharacter(aChar) {
 //---------//
 
 module.exports = {
+  all_object,
   alwaysReturn,
+  appendAll,
   assignOver,
+  contains,
+  dashelize,
+  discard,
   discardAll,
   discardFirst,
+  discardLast,
   discardPreceding,
-  discardWhen,
+  discardWhen_array,
+  discardWhen_object,
   endsWith,
   fromPairs,
-  handleUnexpectedError,
+  getArrayOfKeys,
+  getArrayOfValues,
+  getValueAt,
+  getValueAtPath,
+  isEmpty,
   isFalsey,
+  isLaden,
   isString,
+  isTruthy,
   join,
   jstring,
   keepFirst,
   keepWhen_array,
   keepWhen_object,
   makeApproveHasNoArguments,
-  map,
-  mapKeys,
+  map_array,
   map_object,
+  mapKeys,
+  mAppendAll,
   mMap,
   mSet,
   passThrough,
+  pickAll,
+  pFs,
+  prepend,
   readFile,
+  reduce_array,
   reduce_object,
   resolveAll,
   resolveAllProperties,

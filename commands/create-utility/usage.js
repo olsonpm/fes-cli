@@ -5,6 +5,7 @@ module.exports = tedent(`
 
   Usage
     fes create-utility --type <a utility type> [--slim]
+    fes create-utility --help
 
   Required Arguments
     --name              the name of your utility.  Must be javascript
@@ -18,6 +19,5 @@ module.exports = tedent(`
     --slim              a flag which removes the documentation comments at
                         the end
 
-  For more help on fes utilities please see the documentation
-    at olsonpm.github.io/fes
+  Read more at olsonpm.github.io/fes
 `)

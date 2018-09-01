@@ -1,0 +1,29 @@
+{{{ indexJsHeader }}}
+
+{{#each ownUtilities as |utilityName|}}
+//
+// imports from this package
+//
+
+import {{ utilityName }} from './lib/{{ utilityName }}'
+{{/each}}
+
+{{#each fesPackages as |aPackage packageName|}}
+//
+// imports for '{{ packageName }}'
+//
+
+{{#each aPackage.utilities as |utilityName|}}
+import {{withoutExtension utilityName}} from '{{ packageName }}/lib/{{ utilityName }}
+{{/each}}
+{{/each}}
+
+//
+// exports
+//
+
+export {
+{{#each allUtilities as |utilityName|}}
+  {{withoutExtension utilityName}},
+{{/each}}
+}

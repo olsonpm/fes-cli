@@ -7,11 +7,12 @@ const chai = require('chai'),
   tedent = require('tedent')
 
 const runFesCommand = require('./run-fes-command'),
-  usage = require('../usage')
+  usage = require('../usage'),
+  createUtilityUsage = require('../commands/create-utility/usage')
 
 const { version } = require('../package.json'),
-  { wrapMessage } = require('../helpers'),
-  { map_object } = require('../../helpers')
+  { wrapMessage } = require('./helpers'),
+  { map_object } = require('../helpers')
 
 //
 //------//
@@ -52,6 +53,22 @@ suite('root usage (no correct commands)', () => {
     )
   })
 
+  test("'<command> --help' should print the command's usage", () => {
+    const command = 'create-utility --help'
+    return runFesCommand(command).should.eventually.have.property(
+      'stdout',
+      `\n${createUtilityUsage}\n\n`
+    )
+  })
+
+  test("'<command> --help --anything' should fail", () => {
+    const command = 'create-utility --help --anything'
+    return runFesCommand(command).should.eventually.have.property(
+      'stderr',
+      message.onlyHelp + createUtilityUsage + '\n\n'
+    )
+  })
+
   test("'--invalid' should fail", () => {
     return runFesCommand('--invalid').should.eventually.have.property(
       'stderr',
@@ -84,6 +101,7 @@ suite('root usage (no correct commands)', () => {
 function getMessages() {
   return map_object(wrapMessage)({
     invalidArg: getInvalidArgMessage(),
+    onlyHelp: getOnlyHelpMessage(),
     onlyOneArg: getOnlyOneArgMessage(),
   })
 }
@@ -102,4 +120,8 @@ function getOnlyOneArgMessage() {
 
     additional arguments provided: --version, --invalid
   `)
+}
+
+function getOnlyHelpMessage() {
+  return '--help must be the only argument when passed'
 }

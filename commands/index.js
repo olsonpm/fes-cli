@@ -1,6 +1,5 @@
 module.exports = {
-  createPresetEntry: require('./create-preset-entry'),
-  createUtility: require('./create-utility'),
-  initModule: require('./init-module'),
-  initPreset: require('./init-preset'),
+  createUtility: () => require('./create-utility'),
+  initModule: () => require('./init-module'),
+  writeEntries: () => require('./write-entries'),
 }

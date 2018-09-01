@@ -14,6 +14,7 @@ const {
 
 const {
   assignOver: applyDefaults,
+  dashelize,
   discardAll,
   mapKeys,
   passThrough,
@@ -59,7 +60,7 @@ const approveArguments = commandArgs => {
   if (typeof kebabFilename !== 'boolean') {
     return {
       errorMessage: tedent(`
-        '--kebab-filename' is a boolean flag thus should not be passed a value
+        '--kebab-filename' is a boolean flag and thus should not be passed a value
 
         provided value: ${kebabFilename}
       `),
@@ -69,7 +70,7 @@ const approveArguments = commandArgs => {
   if (typeof slim !== 'boolean') {
     return {
       errorMessage: tedent(`
-        '--slim' is a boolean flag thus should not be passed a value
+        '--slim' is a boolean flag and thus should not be passed a value
 
         provided value: ${slim}
       `),
@@ -93,6 +94,20 @@ const approveArguments = commandArgs => {
 
         it must pass the regex: ${validNameRe}
       `),
+    }
+  }
+
+  if (kebabFilename) {
+    const convertedName = camelcase(dashelize(name))
+    if (convertedName !== name) {
+      return {
+        errorMessage: tedent(`
+          either rename your utility from '${name}' to '${convertedName}' or
+            remove the --kebab-filename flag
+
+          this will allow me to deduce your utility name from the filename
+        `),
+      }
     }
   }
 

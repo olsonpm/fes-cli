@@ -4,18 +4,19 @@
 // Imports //
 //---------//
 
-const kebabcase = require('kebabcase'),
-  path = require('path'),
+const path = require('path'),
   tedent = require('tedent')
 
 const approveArguments = require('./approve-arguments'),
   usage = require('./usage')
 
 const { inFesDirectoryRe } = require('./helpers')
+
 const {
-  alwaysReturn: justReturn,
+  dashelize,
   endsWith,
   handleUnexpectedError,
+  pFs,
   readFile,
 } = require('../../helpers')
 
@@ -29,7 +30,7 @@ Object.assign(createUtility, {
   usage,
 })
 
-function createUtility(argumentsObject) {
+async function createUtility(argumentsObject) {
   try {
     const cwd = process.cwd(),
       maybeExitCode = validateCwd(cwd)
@@ -37,16 +38,15 @@ function createUtility(argumentsObject) {
 
     // valid input, move on
 
-    const makeDir = require('make-dir'),
-      pify = require('pify'),
-      pFs = pify(require('fs'))
+    const makeDir = require('make-dir')
 
     const {
         kebabFilename,
         name: utilityName,
         type: utilityType,
       } = argumentsObject,
-      isInLibDir = endsWith('/lib')(cwd)
+      isInLibDir = endsWith('/lib')(cwd),
+      maybeLib = isInLibDir ? '' : 'lib/'
 
     const maybeChangeToLibDir = isInLibDir
       ? Promise.resolve()
@@ -54,28 +54,24 @@ function createUtility(argumentsObject) {
           process.chdir('lib')
         })
 
-    return Promise.all([
+    const [template] = await Promise.all([
       readFile(path.resolve(__dirname, `./templates/${utilityType}.hbs`)),
       maybeChangeToLibDir,
     ])
-      .then(([template]) => {
-        const handlebars = require('handlebars'),
-          templateData = getTemplateData(argumentsObject)
 
-        const result = handlebars.compile(template, { strict: true })(
-          templateData
-        )
+    const handlebars = require('handlebars'),
+      templateData = getTemplateData(argumentsObject),
+      result = handlebars.compile(template, { strict: true })(templateData),
+      filename = kebabFilename ? dashelize(utilityName) : utilityName
 
-        const filename = kebabFilename ? kebabcase(utilityName) : utilityName
-        return pFs
-          .writeFile(filename + '.js', result)
-          .then(justReturn(filename))
-      })
-      .then(filename => {
-        const maybeLib = isInLibDir ? '' : 'lib/'
-        console.log(`${maybeLib}${filename}.js was created`)
-      })
-      .catch(handleUnexpectedError)
+    try {
+      await pFs.writeFile(filename + '.js', result, { flag: 'wx' })
+    } catch (error) {
+      handleWriteFileError(error, maybeLib, filename)
+      return 1
+    }
+
+    console.log(`${maybeLib}${filename}.js was created`)
   } catch (error) {
     return handleUnexpectedError(error)
   }
@@ -105,6 +101,22 @@ function validateCwd(cwd) {
 
     console.error(`\n${message}\n\n\n${usage}\n`)
     return 1
+  }
+}
+
+function handleWriteFileError(error, maybeLib, filename) {
+  const beginningMessage = "I can't create your utility"
+  if (error.code === 'EEXIST') {
+    console.error(
+      `\n${beginningMessage} because '${maybeLib}${filename}' already exists\n`
+    )
+  } else {
+    const message = tedent(`
+      ${beginningMessage} at '${maybeLib}${filename}' due to an unexpected filesystem error
+
+      code: ${error.code}
+    `)
+    console.error(`\n${message}\n`)
   }
 }
 

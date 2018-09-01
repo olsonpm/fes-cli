@@ -2,21 +2,20 @@ const tedent = require('tedent')
 const { version } = require('./package.json')
 
 module.exports = tedent(`
-  Description: Some utilities for use with the 'fes' library
+  Description: Utilities for use with the 'fes' library
 
   Usage
     fes <an argument>
     fes <command> [command arguments...]
 
   Arguments
-    --help                 print this
-    --version              print version
+    --help            print this
+    --version         print version
 
   Commands
-    init-module            creates the skeleton for a module
-    init-preset            creates the skeleton for a preset
-    create-preset-entry    creates the entry for your preset
-    create-utility         creates a utility for either your preset or module
+    init-module       walks you through a fes module initialization
+    write-entries     writes the entry files for your fes package
+    create-utility    creates a utility for your fes package
 
   To get help for a command, type 'fes <command> --help'
 

@@ -2,7 +2,7 @@
 // Main //
 //------//
 
-const inFesDirectoryRe = /\/fes-[a-z][a-z-]*(\/lib)?$/
+const inFesDirectoryRe = /\/fes-[^/]+(\/lib)?$/
 
 const requiredArgs = new Set(['--name', '--type'])
 

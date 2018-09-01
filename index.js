@@ -7,14 +7,13 @@
 //---------//
 
 const camelcase = require('camelcase'),
-  kebabcase = require('kebabcase'),
   tedent = require('tedent')
 
 const cliCommands = require('./commands'),
   usage = require('./usage')
 
 const { version } = require('./package.json'),
-  { join, truncateToNChars } = require('./helpers')
+  { contains, dashelize, join, truncateToNChars } = require('./helpers')
 
 //
 //------//
@@ -26,7 +25,7 @@ const consoleLog = console.log.bind(console),
   allArgs = process.argv.slice(2),
   [commandOrRootArg, ...commandArgs] = allArgs,
   validRootArgs = new Set(['--help', '--version']),
-  validCommands = new Set(Object.keys(cliCommands).map(kebabcase))
+  validCommands = new Set(Object.keys(cliCommands).map(dashelize))
 
 //
 //------//
@@ -55,7 +54,16 @@ if (isArgument(commandOrRootArg)) {
     printUsageAndExit(1)
   }
 
-  const command = cliCommands[camelcase(commandEntered)]
+  const command = cliCommands[camelcase(commandEntered)]()
+
+  if (commandArgs.length === 1 && commandArgs[0] === '--help') {
+    console.log(`\n${command.usage}\n`)
+    process.exit(0)
+  } else if (contains('--help')(commandArgs)) {
+    const errorMessage = '--help must be the only argument when passed'
+    console.error(`\n${errorMessage}\n\n\n${command.usage}\n`)
+    process.exit(1)
+  }
 
   const { argumentsObject, errorMessage } = command.approveArguments(
     commandArgs
@@ -79,6 +87,7 @@ if (isArgument(commandOrRootArg)) {
           ${unhandledRejection}
         `)
       )
+      process.exit(1)
     })
 }
 

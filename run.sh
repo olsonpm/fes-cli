@@ -12,7 +12,12 @@ printUsage() {
 
 case "${command}" in
   test)
-    ./node_modules/.bin/mocha --ui bdd "$@" -- tests ;;
+    ./node_modules/.bin/mocha \
+      --ui tdd \
+      --exclude "tests/commands/tmp/**/*" \
+      "$@" \
+      -- "tests/**/*.js"
+    ;;
 
   lint)
     ./node_modules/.bin/eslint commands tests helpers.js index.js usage.js ;;
