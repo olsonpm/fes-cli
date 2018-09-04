@@ -7,9 +7,11 @@
 const tedent = require('tedent')
 
 const approveArguments = require('./approve-arguments'),
+  writeIndexJsEntry = require('./write-index-js-entry'),
+  writeWebpackEntry = require('./write-webpack-entry'),
   usage = require('./usage')
 
-const { inFesDirectoryRe, inFesPresetRe } = require('./helpers')
+const { inFesDirectoryRe } = require('./helpers')
 
 //
 //------//
@@ -23,19 +25,18 @@ Object.assign(writeEntries, {
 
 async function writeEntries(argumentsObject) {
   try {
-    const cwd = process.cwd(),
-      maybeExitCode = validateCwd(cwd)
+    validateCwd(process.cwd())
 
-    if (maybeExitCode) return maybeExitCode
+    const { ignoreWarnings, packageNames } = argumentsObject
+    const wasCalledFromSiblingTool = !!packageNames
 
-    // if we're not in a fes preset directory then we're in a fes module
-    const createPresetOrModuleEntries = inFesPresetRe.test(cwd)
-      ? require('./preset')
-      : require('./module')
+    await writeIndexJsEntry(packageNames)
+    await writeWebpackEntry(ignoreWarnings)
 
-    return await createPresetOrModuleEntries(argumentsObject)
+    if (!wasCalledFromSiblingTool)
+      console.log('Your entry files were created successfully')
   } catch (error) {
-    return handleUnexpectedError(error)
+    return logError(error)
   }
 }
 
@@ -47,25 +48,29 @@ async function writeEntries(argumentsObject) {
 function validateCwd(cwd) {
   if (!inFesDirectoryRe.test(cwd)) {
     const message = tedent(`
-      You must use write-entries in either a fes module or preset
+      You must use write-entries in a fes module
 
       cwd: ${cwd}
       failed regex: ${inFesDirectoryRe}
     `)
 
-    console.error(`\n${message}\n\n\n${usage}\n`)
-    return 1
+    const error = new Error(message + '\n')
+    error.justLogMessage = true
+    throw error
   }
 }
 
-function handleUnexpectedError(error) {
-  console.error(
-    tedent(`
-      An unexpected error occurred while creating the entries
+function logError(error) {
+  if (error.justLogMessage) console.error(error.message)
+  else {
+    console.error(
+      tedent(`
+        An unexpected error occurred while creating the entries
 
-      ${error.stack}
-    `)
-  )
+        ${error.stack}
+      `)
+    )
+  }
   return 1
 }
 

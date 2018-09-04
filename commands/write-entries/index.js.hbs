@@ -1,0 +1,33 @@
+{{{ indexJsHeader }}}
+{{#ifIsLaden ownUtilities }}
+
+//
+// imports from this package
+//
+{{#each ownUtilities as |aUtility|}}
+
+import {{ aUtility.name }}_definition from './lib/{{removeExtension aUtility.fileName}}'
+const {{ aUtility.name }} = createUtility({{ aUtility.name }}_definition)
+{{/each}}
+{{/ifIsLaden}}
+{{#each packageNameToUtilities as |utilities packageName|}}
+
+//
+// imports for '{{ packageName }}'
+//
+{{#each utilities as |aUtility|}}
+
+import {{ aUtility.name }}_definition from '{{ packageName }}/lib/{{removeExtension aUtility.fileName}}'
+const {{ aUtility.name }} = createUtility({{ aUtility.name }}_definition)
+{{/each}}
+{{/each}}
+
+//
+// exports
+//
+
+export {
+{{#each allUtilityNames as |utilityName|}}
+  {{ utilityName }},
+{{/each}}
+}

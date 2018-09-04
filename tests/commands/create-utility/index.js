@@ -19,7 +19,6 @@ const { wrapMessage } = require('../../helpers'),
 const {
   inFesDirectoryRe,
   validArgs,
-  validNameRe,
   validUtilityTypes,
 } = require('../../../commands/create-utility/helpers')
 
@@ -31,7 +30,9 @@ const {
 chai.use(chaiAsPromised)
 chai.should()
 
-const message = getMessages(),
+const fes = require('esm')(module)('fes')
+
+const message = getMessages(fes),
   tmpFesSuccessDir = path.resolve(__dirname, '../tmp/fes-tmp')
 
 //
@@ -136,13 +137,13 @@ suite('create-utility', () => {
 // Helper Functions //
 //------------------//
 
-function getMessages() {
+function getMessages(fes) {
   return map_object(wrapMessage)({
     expectedArgumentName: getExpectedArgumentNameMessage(),
     invalidCwd: getInvalidCwdMessage(),
     kebabFilenameIsBoolean: getKebabFilenameIsBooleanMessage(),
     nameIncompatibleWithKebabFilename: getNameIncompatibleWithKebabFilenameMessage(),
-    nameIsInvalid: getNameIsInvalidMessage(),
+    nameIsInvalid: getNameIsInvalidMessage(fes),
     missingArg: getMissingArgMessage(),
     slimIsBoolean: getSlimIsBooleanMessage(),
     typeIsInvalid: getTypeIsInvalidMessage(),
@@ -168,7 +169,7 @@ function getUnexpectedArgMessage() {
 
 function getKebabFilenameIsBooleanMessage() {
   return tedent(`
-    '--kebab-filename' is a boolean flag thus should not be passed a value
+    '--kebab-filename' is a boolean flag and thus should not be passed a value
 
     provided value: invalid
   `)
@@ -176,7 +177,7 @@ function getKebabFilenameIsBooleanMessage() {
 
 function getSlimIsBooleanMessage() {
   return tedent(`
-    '--slim' is a boolean flag thus should not be passed a value
+    '--slim' is a boolean flag and thus should not be passed a value
 
     provided value: invalid
   `)
@@ -209,11 +210,11 @@ function getInvalidCwdMessage() {
   `)
 }
 
-function getNameIsInvalidMessage() {
+function getNameIsInvalidMessage(fes) {
   return tedent(`
     --name '1' is invalid
 
-    it must pass the regex: ${validNameRe}
+    it must pass the regex: ${fes._validUtilityNameRe}
   `)
 }
 

@@ -1,0 +1,8 @@
+{
+  "fes": {
+    "packages": [
+      "fes-test1",
+      "fes-test2"
+    ]
+  }
+}

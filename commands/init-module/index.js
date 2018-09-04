@@ -18,7 +18,6 @@ const {
   getArrayOfKeys,
   getArrayOfValues,
   getValueAtPath,
-  isEmpty,
   isLaden,
   isTruthy,
   keepWhen_object: keepWhen,
@@ -154,14 +153,12 @@ async function createModule(promptUserResult) {
 
   if (dependsOnFesPackages) {
     const nonNpmPackageNames = isLaden(nonNpmInstallStrings)
-      ? getNonNpmPackageNames(nonNpmInstallStrings)
+      ? await getNonNpmPackageNames(nonNpmInstallStrings)
       : []
 
     await addNonNpmPackagesToFesConfig(nonNpmPackageNames, pathToPackageJson)
 
     const allPackageNames = npmPackageNames.concat(nonNpmPackageNames)
-
-    console.log('allPackageNames: ' + allPackageNames)
 
     //
     // TODO write-entries when fes packages are present
@@ -195,9 +192,7 @@ async function addNonNpmPackagesToFesConfig(
   const pjson = JSON.parse(pjsonContents)
   mAppendAll(nonNpmPackageNames)(pjson.fes.packages)
 
-  await pFs.writeFile(pathToPackageJson, JSON.stringify(pjson, null, 2))
-
-  return nonNpmPackageNames
+  return pFs.writeFile(pathToPackageJson, JSON.stringify(pjson, null, 2))
 }
 
 async function tryToMakeDirectory(moduleName) {

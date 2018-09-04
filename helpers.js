@@ -101,6 +101,18 @@ const discardWhen_object = predicate => anObject => {
 const endsWith = mightEndWith => fullString =>
   fullString.slice(-mightEndWith.length) === mightEndWith
 
+// flattens a single leve
+const flatten = anArray => {
+  const result = []
+
+  for (const element of anArray) {
+    if (Array.isArray(element)) mAppendAll(element)(result)
+    else result.push(element)
+  }
+
+  return result
+}
+
 const fromPairs = anArray =>
   anArray.reduce((res, [key, val]) => mSet(key, val)(res), {})
 
@@ -110,6 +122,10 @@ const getArrayOfKeys = Object.keys
 
 const getArrayOfValues = anObject =>
   Object.keys(anObject).map(key => anObject[key])
+
+const getDefaultIfEsModule = something => {
+  return something.__esModule ? something.default : something
+}
 
 const getLastElement = anArray => anArray[anArray.length - 1]
 
@@ -181,6 +197,8 @@ const keepWhen_object = predicate => anObject => {
   return result
 }
 
+const lengthIsGreaterThan = n => something => something.length > n
+
 const makeApproveHasNoArguments = command => {
   return function approveHasNoArguments(commandArgs) {
     return !commandArgs.length
@@ -234,6 +252,8 @@ const mSet = (key, value) => anObject => {
   return anObject
 }
 
+const noop = () => undefined
+
 const passThrough = (arg, arrayOfFunctions) =>
   arrayOfFunctions.reduce((result, aFunction) => aFunction(result), arg)
 
@@ -262,6 +282,8 @@ const reduce_object = (reducerFunction, start) => anObject => {
     start
   )
 }
+
+const requireEsm = require('esm')(module)
 
 const resolveAll = arrayOfPromises => Promise.all(arrayOfPromises)
 
@@ -449,9 +471,11 @@ module.exports = {
   discardWhen_array,
   discardWhen_object,
   endsWith,
+  flatten,
   fromPairs,
   getArrayOfKeys,
   getArrayOfValues,
+  getDefaultIfEsModule,
   getValueAt,
   getValueAtPath,
   isEmpty,
@@ -464,6 +488,7 @@ module.exports = {
   keepFirst,
   keepWhen_array,
   keepWhen_object,
+  lengthIsGreaterThan,
   makeApproveHasNoArguments,
   map_array,
   map_object,
@@ -471,6 +496,7 @@ module.exports = {
   mAppendAll,
   mMap,
   mSet,
+  noop,
   passThrough,
   pickAll,
   pFs,
@@ -478,6 +504,7 @@ module.exports = {
   readFile,
   reduce_array,
   reduce_object,
+  requireEsm,
   resolveAll,
   resolveAllProperties,
   returnFirstArgument,

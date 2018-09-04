@@ -5,12 +5,7 @@
 const camelcase = require('camelcase'),
   tedent = require('tedent')
 
-const {
-  requiredArgs,
-  validArgs,
-  validNameRe,
-  validUtilityTypes,
-} = require('./helpers')
+const { requiredArgs, validArgs, validUtilityTypes } = require('./helpers')
 
 const {
   assignOver: applyDefaults,
@@ -18,8 +13,16 @@ const {
   discardAll,
   mapKeys,
   passThrough,
+  requireEsm,
   toArgumentsObject,
 } = require('../../helpers')
+
+//
+//------//
+// Init //
+//------//
+
+const fes = requireEsm('fes')
 
 //
 //------//
@@ -87,12 +90,12 @@ const approveArguments = commandArgs => {
     }
   }
 
-  if (!validNameRe.test(name)) {
+  if (!fes._validUtilityNameRe.test(name)) {
     return {
       errorMessage: tedent(`
         --name '${name}' is invalid
 
-        it must pass the regex: ${validNameRe}
+        it must pass the regex: ${fes._validUtilityNameRe}
       `),
     }
   }

@@ -11,5 +11,9 @@ module.exports = tedent(`
     fes write-entries [--ignore-warnings]
     fes write-entries --help
 
+  Optional Arguments
+    --ignore-warnings    ignore webpack compilation warnings.  By default
+                         warnings prevent the entry files from being written.
+
   Read more at olsonpm.github.io/fes
 `)
